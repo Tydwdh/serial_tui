@@ -1,11 +1,5 @@
-use super::*;
-use crossterm::event::KeyCode::*;
 use ratatui::widgets::Widget;
-use ratatui::{
-    prelude::*,
-    style::{Color, Modifier, Style},
-    widgets::*,
-};
+use ratatui::{prelude::*, style::Color, widgets::*};
 #[derive(Debug, Default, Clone)]
 pub struct TextInputState {
     content: String,
