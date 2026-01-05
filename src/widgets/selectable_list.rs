@@ -1,6 +1,6 @@
 use ratatui::{
     style::{Color, Modifier, Style},
-    widgets::{Block, BorderType, List, ListItem, ListState, StatefulWidget},
+    widgets::{Block, List, ListItem, ListState, StatefulWidget},
 };
 
 #[derive(Default)]
@@ -101,11 +101,11 @@ impl StatefulWidget for SelectableList {
 
         let block = if state.is_focus {
             Block::bordered()
-                .border_style(Style::default().fg(Color::Yellow))
+                .border_style(Style::default().fg(Color::LightYellow))
                 .title(self.name)
                 .title_style(
                     Style::default()
-                        .fg(Color::Yellow)
+                        .fg(Color::LightYellow)
                         .add_modifier(Modifier::BOLD),
                 )
         } else {

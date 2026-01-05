@@ -12,6 +12,7 @@ mod widgets;
 use action::*;
 mod components;
 use components::*;
+use serialport::SerialPort;
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Mode {
     UartChoice,
@@ -25,22 +26,29 @@ fn main() -> Result<()> {
     Ok(())
 }
 struct App {
+    com: String,
+    rate: u32,
+    port: Option<Box<dyn SerialPort>>,
     should_quit: bool,
     mode: Mode,
     // 实例化组件
     uart_list: ListComponent,
     rate_list: ListComponent,
     input: CommandInputComponent,
+    receive_area: ReceiveComponent,
 }
 
 impl App {
     fn new() -> Self {
         // 初始化逻辑
-        let ports = serialport::available_ports()
+        let ports: Vec<String> = serialport::available_ports()
             .map(|p| p.iter().map(|x| x.port_name.clone()).collect())
             .unwrap_or_default();
 
         Self {
+            com: ports[0].clone(),
+            rate: 9600,
+            port: None,
             should_quit: false,
             mode: Mode::CommandInput, // 默认模式
             uart_list: ListComponent::new(
@@ -54,6 +62,7 @@ impl App {
                 Action::SelectRate,
             ),
             input: CommandInputComponent::new(),
+            receive_area: ReceiveComponent::new(),
         }
     }
 
@@ -63,18 +72,24 @@ impl App {
             Action::Quit => self.should_quit = true,
             Action::SwitchMode(mode) => self.mode = mode,
             Action::SelectPort(port) => {
-                // 处理连接逻辑
-                // 连接成功后，可能自动切回 Input 模式
+                self.com = port.clone();
                 self.mode = Mode::CommandInput;
             }
             Action::SelectRate(rate) => {
                 // 设置波特率逻辑
+                self.rate = rate.parse().unwrap();
                 self.mode = Mode::CommandInput;
             }
             Action::Error(e) => {
                 // 可以在这里设置一个错误提示弹窗的状态
             }
             Action::None => {}
+            Action::Open => {
+                self.port = serialport::new(self.com.clone(), self.rate)
+                    .timeout(Duration::from_millis(1)) // 超时设置
+                    .open()
+                    .ok();
+            }
         }
     }
 
@@ -108,7 +123,7 @@ impl App {
         .split(up_area);
 
         let left_panel_area = hor_layout[0];
-        let _receive_data_area = hor_layout[1]; // 暂时没用到，留给未来
+        let receive_data_area = hor_layout[1]; // 暂时没用到，留给未来
 
         // 3. 左侧面板布局：这是你最关心的动态部分
         // 根据当前模式，决定 串口列表 和 波特率列表 的高度比例
@@ -153,7 +168,29 @@ impl App {
             .render(frame, command_area, self.mode == Mode::CommandInput);
 
         // 如果有接收区组件，也在这里渲染
-        // self.receive_area.render(frame, _receive_data_area, false);
+        self.receive_area.render(frame, receive_data_area, false);
+    }
+
+    fn try_read_serial_data(&mut self) -> Result<()> {
+        if let Some(port) = &mut self.port {
+            let mut buffer = [0u8; 256]; // 一次最多读 256 字节
+            match port.read(&mut buffer) {
+                Ok(n) if n > 0 => {
+                    let data = String::from_utf8_lossy(&buffer[..n]);
+                    self.receive_area.state.append_text(&data);
+                }
+                Ok(_) => {} // 读到 0 字节（无数据）
+                Err(e) => {
+                    // 可能是超时（正常），也可能是断开
+                    if e.kind() != std::io::ErrorKind::TimedOut {
+                        // 真实错误：串口断开？
+                        eprintln!("串口读取错误: {}", e);
+                        self.port = None; // 关闭串口
+                    }
+                }
+            }
+        }
+        Ok(())
     }
 }
 
@@ -161,6 +198,8 @@ fn app(terminal: &mut DefaultTerminal) -> Result<()> {
     let mut app = App::new();
 
     loop {
+        app.try_read_serial_data().unwrap();
+
         terminal.draw(|frame| app.render(frame))?;
 
         if event::poll(Duration::from_millis(100))?

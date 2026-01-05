@@ -112,7 +112,7 @@ impl StatefulWidget for TextInput {
 
         let block = if state.is_focus {
             Block::bordered()
-                .border_style(Style::new().fg(Color::Yellow))
+                .border_style(Style::new().fg(Color::LightYellow))
                 .title("Input")
         } else {
             Block::bordered()
@@ -151,6 +151,7 @@ impl StatefulWidget for TextInput {
         Paragraph::new(text_line)
             .block(block)
             .style(Style::new().fg(Color::LightBlue))
+            .wrap(Wrap { trim: true })
             .render(area, buf);
     }
 }

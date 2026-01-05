@@ -7,5 +7,6 @@ pub enum Action {
     SwitchMode(Mode),   // 切换当前焦点模式
     SelectPort(String), // 选中了某个串口
     SelectRate(String), // 选中了某个波特率
+    Open,
     Error(String),
 }

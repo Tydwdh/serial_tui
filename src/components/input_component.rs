@@ -34,6 +34,7 @@ impl Component for CommandInputComponent {
                     return Ok(Action::SwitchMode(crate::Mode::RateChoice));
                 }
                 Ok(Command::Quit) => return Ok(Action::Quit),
+                Ok(Command::Open) => return Ok(Action::Open),
                 Err(e) => return Ok(Action::Error(e)),
             }
         }

@@ -1,6 +1,7 @@
 pub enum Command {
     ModeToUartChoice,
     ModeToRateChoice,
+    Open,
     Quit,
 }
 
@@ -64,9 +65,10 @@ pub fn parse_command(input: &str) -> Result<Command, String> {
 
 fn dispatch(cmd: ParsedCommand) -> Result<Command, String> {
     match cmd.name.as_str() {
-        "com" => Ok(Command::ModeToUartChoice),
+        "c" => Ok(Command::ModeToUartChoice),
         "q" => Ok(Command::Quit),
-        "rate" => Ok(Command::ModeToRateChoice),
+        "r" => Ok(Command::ModeToRateChoice),
+        "o" => Ok(Command::Open),
         _ => Err(format!("Unknown command: {}", cmd.name)),
     }
 }

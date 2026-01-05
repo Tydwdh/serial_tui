@@ -6,6 +6,8 @@ mod list_component;
 pub use list_component::*;
 mod input_component;
 pub use input_component::*;
+mod receive_component;
+pub use receive_component::*;
 pub trait Component {
     // 处理按键，返回一个 Action 告诉 App 该做什么
     fn handle_key_events(&mut self, key: KeyEvent) -> Result<Action>;
